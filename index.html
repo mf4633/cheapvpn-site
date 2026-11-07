@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CheapVPN: put Chrome through your own SSH tunnel or proxy</title>
+<meta name="description" content="A Chrome extension that sends browser traffic through an SSH tunnel or proxy server you control. One click on, one click off. Free, with an optional $2.99 upgrade for per-site rules.">
+<link rel="canonical" href="https://mf4633.github.io/cheapvpn-site/">
+<meta property="og:title" content="CheapVPN: put Chrome through your own SSH tunnel or proxy">
+<meta property="og:description" content="One click on, one click off. It connects Chrome to a server you run or rent, and it comes with no servers of its own.">
+<meta property="og:image" content="https://mf4633.github.io/cheapvpn-site/hero.png">
+<link rel="icon" href="icon128.png">
+<style>
+:root{
+  --ink:#10261d; --body:#2c4238; --quiet:#566b61;
+  --paper:#edf2ec; --sheet:#f8faf6; --line:#c7d3c9;
+  --tunnel:#14523a; --tunnel-deep:#0c3a29; --mint:#bfeccf;
+  --sign:#f2b01e;
+  --type-sign:Bahnschrift,"DIN Alternate","DIN Condensed","Roboto Condensed","Arial Narrow",sans-serif;
+  --type-body:"Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",sans-serif;
+  --type-code:Consolas,ui-monospace,Menlo,"Cascadia Mono",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--body);font:400 17px/1.6 var(--type-body)}
+a{color:var(--tunnel);text-underline-offset:.18em}
+a:hover{color:var(--tunnel-deep)}
+:focus-visible{outline:3px solid var(--sign);outline-offset:3px;border-radius:2px}
+h1,h2,h3{font-family:var(--type-sign);color:var(--ink);font-weight:600;line-height:1.08;margin:0}
+h2{font-size:clamp(1.8rem,3.4vw,2.5rem);margin-bottom:.6em}
+h3{font-size:1.3rem;margin-bottom:.35em}
+p{margin:0 0 1em;max-width:62ch}
+code{font-family:var(--type-code);font-size:.93em;white-space:nowrap}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+
+.brand{display:flex;align-items:center;gap:10px;padding:22px 0;font:600 1.2rem var(--type-sign);color:var(--ink);text-decoration:none;width:max-content}
+.brand img{width:30px;height:30px;border-radius:7px}
+
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:56px;align-items:end;padding-top:26px}
+.hero h1{font-size:clamp(2.7rem,6.6vw,5.1rem);letter-spacing:-.012em;margin-bottom:.38em}
+.lede{font-size:1.2rem;line-height:1.5;color:var(--body);max-width:32em}
+.status{display:inline-block;background:var(--sign);color:var(--ink);font:600 1.12rem var(--type-sign);padding:13px 22px;border-radius:5px;text-decoration:none;margin:10px 0 12px}
+.status[href]:hover{background:#ffc53d;color:var(--ink)}
+.note{font-size:.92rem;color:var(--quiet);margin:0 0 56px}
+
+/* The memorable thing: the product sits inside the tunnel mouth from its icon. */
+.portal{align-self:end;background:linear-gradient(180deg,var(--tunnel-deep),var(--tunnel) 62%);border-radius:50% 50% 0 0/34% 34% 0 0;padding:92px 34px 0;display:flex;justify-content:center;overflow:hidden;box-shadow:inset 0 0 0 14px var(--mint)}
+.portal img{display:block;width:100%;max-width:340px;height:auto;border-radius:10px 10px 0 0;box-shadow:0 -6px 34px rgba(0,0,0,.34)}
+
+.road{background:var(--tunnel-deep);color:#dbeee2;padding:62px 0 66px}
+.road h2{color:#fff}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:38px}
+.steps li{counter-increment:s;min-width:0}
+.steps li::before{content:counter(s);display:block;font:600 2.7rem/1 var(--type-sign);color:var(--sign);margin-bottom:12px}
+.steps h3{color:#fff}
+.steps p{font-size:1rem}
+.steps code{color:var(--mint)}
+pre{margin:0 0 .8em;background:#072619;color:var(--mint);padding:13px 15px;border-radius:5px;overflow-x:auto;font:400 .93rem/1.5 var(--type-code)}
+
+.plain{padding-top:66px;padding-bottom:22px}
+.plans{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-top:3px solid var(--ink)}
+.plan{padding:24px 34px 18px 0}
+.plan + .plan{border-left:1px solid var(--line);padding-left:34px}
+.price{font:600 1.05rem var(--type-sign);color:var(--tunnel);margin:0 0 .7em}
+.plan ul{margin:0;padding-left:1.15em}
+.plan li{margin-bottom:.4em}
+
+.straight{padding-top:44px;padding-bottom:58px}
+.straight dl{margin:0;display:grid;grid-template-columns:minmax(0,15em) minmax(0,1fr);border-top:1px solid var(--line)}
+.straight dt,.straight dd{margin:0;padding:17px 0;border-bottom:1px solid var(--line)}
+.straight dt{font:600 1.1rem/1.3 var(--type-sign);color:var(--ink);padding-right:24px}
+
+footer{background:var(--sheet);border-top:1px solid var(--line);padding:24px 0;font-size:.93rem;color:var(--quiet)}
+footer p{margin:0;max-width:none}
+
+@media (max-width:820px){
+  .hero{grid-template-columns:1fr;gap:6px}
+  .note{margin-bottom:30px}
+  .portal{max-width:440px;width:100%;justify-self:center}
+  .steps{grid-template-columns:1fr;gap:30px}
+  .plans{grid-template-columns:1fr}
+  .plan{padding-right:0}
+  .plan + .plan{border-left:0;border-top:1px solid var(--line);padding-left:0}
+  .straight dl{grid-template-columns:1fr}
+  .straight dt{border-bottom:0;padding-bottom:0}
+  .straight dd{padding-top:6px}
+}
+</style>
+</head>
+<body>
+<header class="wrap"><a class="brand" href="./"><img src="icon128.png" alt="">CheapVPN</a></header>
+
+<main>
+<section class="wrap hero">
+  <div>
+    <h1>Put Chrome through your own SSH tunnel.</h1>
+    <p class="lede">Send your browser's traffic through a server you run or rent, then switch back with one click. No settings pages and no sign-up.</p>
+    <!-- STORE_CTA_START -->
+    <span class="status">In Chrome Web Store review</span>
+    <p class="note">The install link goes here as soon as Google approves it.</p>
+    <!-- STORE_CTA_END -->
+  </div>
+  <div class="portal"><img src="popup.png" width="648" height="1128" alt="The CheapVPN popup, connected through a server named Frankfurt VPS, with a list of three servers and their speeds."></div>
+</section>
+
+<section class="road">
+  <div class="wrap">
+    <h2>From nothing to tunneled in three steps</h2>
+    <ol class="steps">
+      <li>
+        <h3>Open a tunnel</h3>
+        <p>In a terminal, connect to any server you can SSH into and leave it running.</p>
+        <pre>ssh -D 1080 -N you@your-server</pre>
+      </li>
+      <li>
+        <h3>Add it to CheapVPN</h3>
+        <p>Click the toolbar icon and open Add server. Choose SOCKS5, then enter host <code>127.0.0.1</code> and port <code>1080</code>.</p>
+      </li>
+      <li>
+        <h3>Turn it on</h3>
+        <p>Flip the switch and the toolbar shows ON. Click Check my IP to confirm you're coming out of your server. Flip it off to go direct again.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="wrap plain">
+  <h2>What you get</h2>
+  <div class="plans">
+    <div class="plan">
+      <h3>Free</h3>
+      <p class="price">No time limit</p>
+      <ul>
+        <li>SOCKS5, SOCKS4, HTTP and HTTPS proxies</li>
+        <li>Save several servers and switch between them</li>
+        <li>Automatic login for HTTP and HTTPS proxies</li>
+        <li>Bypass list for local sites and chosen domains</li>
+        <li>Check my IP</li>
+      </ul>
+    </div>
+    <div class="plan">
+      <h3>Pro</h3>
+      <p class="price">$2.99 once, no subscription</p>
+      <ul>
+        <li>Send only the sites you choose through the proxy, subdomains included</li>
+        <li>Use a different server for each site</li>
+        <li>Test every server for latency, speed and exit country</li>
+        <li>Switch to the fastest server in one click</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="wrap straight">
+  <h2>Before you install</h2>
+  <dl>
+    <dt>It isn't a VPN service</dt>
+    <dd>CheapVPN comes with no servers. It connects Chrome to a proxy or tunnel you already have, and you need one for it to do anything.</dd>
+    <dt>It only covers Chrome</dt>
+    <dd>Other apps on your computer keep using your normal connection.</dd>
+    <dt>Your server sees your traffic</dt>
+    <dd>Whoever runs the proxy can see what your internet provider normally could, so use one you trust.</dd>
+    <dt>SOCKS logins don't work</dt>
+    <dd>Chrome doesn't support SOCKS usernames and passwords. Logins work with HTTP and HTTPS proxies. An <code>ssh -D</code> tunnel doesn't need one.</dd>
+    <dt>What it sends</dt>
+    <dd>There are no analytics. It checks your Pro status with ExtensionPay, and it only contacts other services when you click Check my IP or Test all. <a href="https://mf4633.github.io/extension-policies/cheapvpn/privacy.html">Read the privacy policy</a>.</dd>
+    <dt>You can read the code</dt>
+    <dd>The full source is <a href="https://github.com/mf4633/cheapvpn">on GitHub</a> under the AGPL. There's no build step, so you can load it into Chrome yourself.</dd>
+    <dt>When to use something else</dt>
+    <dd>If you need PAC files or large auto-switch rule lists, <a href="https://github.com/zero-peak/ZeroOmega">ZeroOmega</a> is free and does far more. CheapVPN is for people who want a switch.</dd>
+  </dl>
+</section>
+</main>
+
+<footer><div class="wrap"><p>Made by an independent developer. Questions: <a href="mailto:michael@hydrocomplete.com">michael@hydrocomplete.com</a>. This page has no cookies or analytics.</p></div></footer>
+</body>
+</html>
